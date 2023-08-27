@@ -1,0 +1,11 @@
+{
+    "python.testing.unittestEnabled": true,
+    "editor.formatOnPaste": true,
+    "editor.formatOnSave": true,
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+    "python.formatting.provider": "none",
+    "black-formatter.importStrategy": "fromEnvironment",
+    "python.analysis.typeCheckingMode": "basic"
+}
