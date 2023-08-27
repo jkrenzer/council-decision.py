@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "council_decision"
+version = "0.1.0"
+description = "Cryptographical secure decision making and voting"
+authors = ["Jörn Krenzer"]
+license = "AGPL-3"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pydantic = "^2.3.0"
+fastapi = "^0.101.1"
+ruamel-yaml = "^0.17.32"
+configargparse = "^1.7"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.7.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
