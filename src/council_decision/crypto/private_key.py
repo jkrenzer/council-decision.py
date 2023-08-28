@@ -1,6 +1,7 @@
 import os
 from abc import ABC, abstractmethod
-from typing import Any, Union
+from enum import Enum
+from typing import Any, Union, Literal, Annotated
 from pydantic import Field
 from cryptography.hazmat.primitives.asymmetric import ec, rsa
 from cryptography.hazmat.primitives import hashes
@@ -20,8 +21,21 @@ from council_decision.pydantic import BaseModel
 from .signature import Signature, Signable
 
 
-class PrivateKey(BaseModel, ABC):
+class BasePrivateKey(BaseModel, ABC):
     key: Any
+
+    class KeyType(Enum):
+        EC = "EC"
+        RSA = "RSA"
+
+    type: KeyType
+
+    @classmethod
+    def create(cls, type: KeyType = KeyType.EC) -> "PrivateKey":
+        key_type_map = {
+            cls.KeyType.EC: EllipticCurvePrivateKey,
+        }
+        return key_type_map.get(type, EllipticCurvePrivateKey)()
 
     @abstractmethod
     def decrypt_from(
@@ -53,10 +67,11 @@ class PrivateKey(BaseModel, ABC):
         return self.key.private_numbers() == __value.key.private_numbers()
 
 
-class EllipticCurvePrivateKey(PrivateKey):
+class EllipticCurvePrivateKey(BasePrivateKey):
     key: "cryptography.EllipticCurvePrivateKey" = Field(
         default_factory=lambda: ec.generate_private_key(ec.SECP384R1())
     )
+    type: Literal[BasePrivateKey.KeyType.EC] = BasePrivateKey.KeyType.EC
 
     def shared_cipher(
         self,
@@ -113,6 +128,10 @@ class EllipticCurvePrivateKey(PrivateKey):
 
 #     def sign(self, data: Signable) -> Signature:
 #         return super().sign(data)
+
+PrivateKey = BasePrivateKey
+
+AnyPrivateKey = Union[EllipticCurvePrivateKey]
 
 from council_decision.pydantic import cryptography
 from .public_key import PublicKey, EllipticCurvePublicKey
