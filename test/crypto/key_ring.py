@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+from council_decision.crypto.dump_password import DumpPassword
 from council_decision.crypto.key_ring import KeyRing
 from council_decision.crypto.plain_text import PlainText
 from council_decision.crypto import InvalidSignature
@@ -12,8 +13,11 @@ class TestKeyRing(TestCase):
 
     def test_import_export(self):
         key_ring = KeyRing()
-        key_ring_dump = key_ring.model_dump()
-        key_ring2 = KeyRing(**key_ring_dump)
+        dump_password = DumpPassword("Test")
+        with dump_password:
+            key_ring_dump = key_ring.model_dump()
+        with dump_password:
+            key_ring2 = KeyRing(**key_ring_dump)
         self.assertEqual(key_ring, key_ring2)
 
     def test_encryption(self):

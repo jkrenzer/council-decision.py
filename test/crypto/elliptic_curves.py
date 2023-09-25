@@ -4,10 +4,12 @@ from unittest import TestCase
 class TestEllipticCurves(TestCase):
     def test_key_generation(self):
         from council_decision.crypto.private_key import EllipticCurvePrivateKey
+        from council_decision.crypto.dump_password import DumpPassword
 
         private_key = EllipticCurvePrivateKey()
-        serialized = private_key.model_dump()
-        private_key2 = EllipticCurvePrivateKey(**serialized)
+        with DumpPassword("Test") as dp:
+            serialized = private_key.model_dump()
+            private_key2 = EllipticCurvePrivateKey(**serialized)
         self.assertEqual(private_key, private_key2)
 
     def test_cryptographic_roundtrip(self):

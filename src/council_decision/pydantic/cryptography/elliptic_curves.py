@@ -16,6 +16,8 @@ from pydantic import (
 )
 from pydantic.json_schema import JsonSchemaValue
 
+from council_decision.crypto.dump_password import DumpPassword
+
 
 class _EllipticCurvePrivateKeyPydanticAnnotation:
     @classmethod
@@ -38,7 +40,7 @@ class _EllipticCurvePrivateKeyPydanticAnnotation:
                 ec.EllipticCurvePrivateKey,
                 serialization.load_pem_private_key(
                     value,
-                    password=None,
+                    password=DumpPassword.get(),
                 ),
             )
 
@@ -62,7 +64,9 @@ class _EllipticCurvePrivateKeyPydanticAnnotation:
                 lambda instance: instance.private_bytes(
                     encoding=serialization.Encoding.PEM,
                     format=serialization.PrivateFormat.PKCS8,
-                    encryption_algorithm=serialization.NoEncryption(),
+                    encryption_algorithm=serialization.BestAvailableEncryption(
+                        DumpPassword.get()
+                    ),
                 )
             ),
         )
