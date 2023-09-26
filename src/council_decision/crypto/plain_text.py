@@ -22,6 +22,9 @@ class PlainText(Bytes):
             ), "You have to give one private and one public key!"
         return key.encrypt_to(self, other_key)
 
+    def as_string(self) -> str:
+        return str(self.data)
+
 
 from .cipher_text import CipherText
 from .private_key import PrivateKey

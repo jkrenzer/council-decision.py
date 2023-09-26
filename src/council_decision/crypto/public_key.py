@@ -63,6 +63,8 @@ class EllipticCurvePublicKey(PublicKey):
 # class RsaPublicKey(PublicKey):
 #     pass
 
+AnyPublicKey = Union[EllipticCurvePublicKey]
+
 from .private_key import PrivateKey, EllipticCurvePrivateKey
 from .cipher_text import CipherText
 from .plain_text import PlainText
