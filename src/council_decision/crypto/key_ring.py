@@ -1,14 +1,29 @@
+from typing import Union
 from pydantic import Field
 from council_decision.pydantic import BaseModel
 
-from .private_key import PrivateKey, AnyPrivateKey
-from .public_key import PublicKey
+from .private_key import PrivateKey, LockedPrivateKey, AnyPrivateKey
+from .public_key import PublicKey, AnyPublicKey
 from .cipher_text import CipherText
 from .plain_text import PlainText
 from .signature import Signature, Signable
 
 
-class KeyRing(BaseModel):
+class PublicKeyRing(BaseModel):
+    private_key_ring: Union["PrivateKeyRing", None] = None
+    encryption_public_key: AnyPublicKey
+    signature_public_key: AnyPublicKey
+
+    def encrypt_to(
+        self, plain_text: PlainText, own_private_key: PrivateKey
+    ) -> CipherText:
+        return self.encryption_public_key.encrypt_to(plain_text, own_private_key)
+
+    def verify(self, signature: Signature, signabe_obj: Signable) -> None:
+        self.signature_public_key.verify(signature, signabe_obj)
+
+
+class PrivateKeyRing(BaseModel):
     encrpytion_private_key: AnyPrivateKey = Field(default_factory=PrivateKey.create)
     signature_private_key: AnyPrivateKey = Field(default_factory=PrivateKey.create)
 
@@ -33,3 +48,27 @@ class KeyRing(BaseModel):
 
     def verify(self, signature: Signature, signabe_obj: Signable) -> None:
         self.signature_private_key.verify(signature, signabe_obj)
+
+    def public_key_ring(self):
+        return PublicKeyRing(
+            private_key_ring=self,
+            encryption_public_key=self.encrpytion_private_key.public_key(),
+            signature_public_key=self.signature_private_key.public_key(),
+        )
+
+    def lock(self, password: Union[bytes, None] = None):
+        return LockedPrivateKeyRing(
+            locked_encryption_key=self.encrpytion_private_key.lock(password),
+            locked_signature_key=self.signature_private_key.lock(password),
+        )
+
+
+class LockedPrivateKeyRing(BaseModel):
+    locked_encryption_key: LockedPrivateKey
+    locked_signature_key: LockedPrivateKey
+
+    def unlock(self, password: Union[bytes, None] = None):
+        return PrivateKeyRing(
+            encrpytion_private_key=self.locked_encryption_key.unlock(password),
+            signature_private_key=self.locked_signature_key.unlock(password),
+        )
