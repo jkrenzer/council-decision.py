@@ -1,10 +1,10 @@
 import os
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, Union, Literal, Annotated
+from typing import Any, Union, Literal, Annotated, Type
 from pydantic import Field
 from cryptography.hazmat.primitives.asymmetric import ec, rsa
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.kdf.concatkdf import ConcatKDFHash
 from cryptography.hazmat.primitives.ciphers import (
     Cipher,
@@ -19,6 +19,7 @@ from cryptography.hazmat.primitives.hashes import Hash, SHA256
 from council_decision.pydantic import BaseModel
 
 from .signature import Signature, Signable
+from .dump_password import DumpPassword
 
 
 class BasePrivateKey(BaseModel, ABC):
@@ -65,6 +66,30 @@ class BasePrivateKey(BaseModel, ABC):
 
     def __eq__(self, __value: "PrivateKey") -> bool:
         return self.key.private_numbers() == __value.key.private_numbers()
+
+    def lock(self, password: Union[bytes, None] = None) -> "LockedPrivateKey":
+        if password is None:
+            password = DumpPassword.get()
+        return LockedPrivateKey(
+            locked_key=self.key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.BestAvailableEncryption(password),
+            ),
+            unlocked_type=type(self),
+        )
+
+
+class LockedPrivateKey(BaseModel):
+    locked_key: bytes
+    unlocked_type: Type
+
+    def unlock(self, password: Union[bytes, None] = None) -> "PrivateKey":
+        if password is None:
+            password = DumpPassword.get()
+        return self.unlocked_type(
+            key=serialization.load_pem_private_key(self.locked_key, password)
+        )
 
 
 class EllipticCurvePrivateKey(BasePrivateKey):
